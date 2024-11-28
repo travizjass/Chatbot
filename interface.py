@@ -25,47 +25,47 @@ def process_audio(audio_file, prompt):
     temp_audio_path = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_audio.mp3')
     audio_file.save(temp_audio_path)
     
-    # Read the audio file and convert it to a base64 encoded string
-    with open(temp_audio_path, 'rb') as f:
-        wav_data = f.read()
-    encoded_string = base64.b64encode(wav_data).decode('utf-8')
+    # # Read the audio file and convert it to a base64 encoded string
+    # with open(temp_audio_path, 'rb') as f:
+    #     wav_data = f.read()
+    # encoded_string = base64.b64encode(wav_data).decode('utf-8')
     
-    try:
-        completion = client.chat.completions.create(
-            model="gpt-4-audio-preview",
-            modalities=["text", "audio"],
-            audio={"voice": "alloy", "format": "mp3"},
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        {
-                            "type": "input_audio",
-                            "input_audio": {
-                                "data": encoded_string,
-                                "format": "mp3"
-                            }
-                        }
-                    ]
-                },
-            ]
-        )
-    except Exception as e:
-        os.remove(temp_audio_path)
-        return None, str(e)
+    # try:
+    #     completion = client.chat.completions.create(
+    #         model="gpt-4-audio-preview",
+    #         modalities=["text", "audio"],
+    #         audio={"voice": "alloy", "format": "mp3"},
+    #         messages=[
+    #             {
+    #                 "role": "user",
+    #                 "content": [
+    #                     {
+    #                         "type": "text",
+    #                         "text": prompt
+    #                     },
+    #                     {
+    #                         "type": "input_audio",
+    #                         "input_audio": {
+    #                             "data": encoded_string,
+    #                             "format": "mp3"
+    #                         }
+    #                     }
+    #                 ]
+    #             },
+    #         ]
+    #     )
+    # except Exception as e:
+    #     os.remove(temp_audio_path)
+    #     return None, str(e)
     
-    # Decode the audio data and save it to a file
-    wav_bytes = base64.b64decode(completion.choices[0].message.audio.data)
-    output_audio_path = os.path.join(app.config['UPLOAD_FOLDER'], 'output_audio.wav')
-    with open(output_audio_path, 'wb') as f:
-        f.write(wav_bytes)
+    # # Decode the audio data and save it to a file
+    # wav_bytes = base64.b64decode(completion.choices[0].message.audio.data)
+    output_audio_path = "/home/jasmin/dq/audiobot/audio/Registration_sol.wav"
+    # with open(output_audio_path, 'wb') as f:
+    #     f.write(wav_bytes)
     
-    # Remove the temporary audio file
-    os.remove(temp_audio_path)
+    # # Remove the temporary audio file
+    # os.remove(temp_audio_path)
     
     return output_audio_path, None
 

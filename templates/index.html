@@ -138,12 +138,13 @@
         .audio-controls audio {
             width: 100%;
         }
+
         .chat-box {
             position: fixed;
             bottom: 200px;
             right: 60px;
-            width: 300px;
-            height: 400px;
+            width: 600px;
+            height: 500px;
             background: white;
             border-radius: 15px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
@@ -198,25 +199,49 @@
             cursor: pointer;
         }
 
-        .recording-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .recording-controls button {
-            padding: 8px 15px;
-            background: #2563eb;
+        .recording-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: green;
             color: white;
             border: none;
-            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
 
-        .recording-controls button:disabled {
-            background: #93c5fd;
-            cursor: not-allowed;
+        .recording-button.recording {
+            background-color: red;
+        }
+
+        .processing-animation {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .processing-bar {
+            width: 4px;
+            height: 20px;
+            background: yellow;
+            border-radius: 2px;
+            animation: processingSoundBars 1s ease-in-out infinite;
+        }
+
+        .processing-bar:nth-child(1) { animation-delay: 0.1s; }
+        .processing-bar:nth-child(2) { animation-delay: 0.2s; }
+        .processing-bar:nth-child(3) { animation-delay: 0.3s; }
+        .processing-bar:nth-child(4) { animation-delay: 0.4s; }
+        .processing-bar:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes processingSoundBars {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1.5); }
         }
 
         .typing-indicator {
@@ -298,14 +323,24 @@
                 <div class="voice-bar"></div>
                 <div class="voice-bar"></div>
             </div>
-            <div class="voice-status">Click Start Recording to begin</div>
-            <div class="recording-controls">
-                <button onclick="startRecording()" id="startButton">Start Recording</button>
-                <button onclick="stopRecording()" id="stopButton" disabled>Stop Recording</button>
+           
+            <button class="recording-button" onclick="toggleRecording()" id="recordingButton">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+            </button>
+            <div class="voice-status">Click the button to start recording</div>
+            <div class="processing-animation" style="display: none;">
+                <div class="processing-bar"></div>
+                <div class="processing-bar"></div>
+                <div class="processing-bar"></div>
+                <div class="processing-bar"></div>
+                <div class="processing-bar"></div>
             </div>
             <div class="audio-controls">
                 <audio id="voiceBotAudio" controls style="display: none;">
-                    <source src="" type="audio/wav">
+                    <source src="/home/jasmin/dq/audiobot/audio/MeeSeva Voice Bot.wav" type="audio/wav">
                 </audio>
             </div>
         </div>
@@ -327,7 +362,8 @@
     <script>
         let mediaRecorder;
         let audioChunks = [];
-        
+        let isRecording = false;
+
         // Voice Bot Functions
         async function setupRecording() {
             try {
@@ -355,8 +391,21 @@
                             const audioUrl = URL.createObjectURL(audioBlob);
                             const audioPlayer = document.getElementById('voiceBotAudio');
                             audioPlayer.src = audioUrl;
-                            audioPlayer.style.display = 'block';
-                            document.querySelector('.voice-status').textContent = 'Response ready!';
+                            audioPlayer.controls = false;
+
+                            // Show processing animation after 3-4 seconds
+                            setTimeout(() => {
+                                document.querySelector('.processing-animation').style.display = 'flex';
+                                document.querySelector('.voice-status').textContent = 'Processing...';
+
+                                // Play audio after 5-6 seconds
+                                setTimeout(() => {
+                                    audioPlayer.play();
+                                    document.querySelector('.voice-status').textContent = 'Response Ready!';
+                                    audioPlayer.style.display = 'block';
+                                    document.querySelector('.processing-animation').style.display = 'none';
+                                }, 5000); // 5 seconds
+                            }, 3000); // 3 seconds
                         } else {
                             console.error('Error processing voice');
                         }
@@ -369,19 +418,29 @@
             }
         }
 
-        function startRecording() {
-            audioChunks = [];
-            mediaRecorder.start();
-            document.getElementById('startButton').disabled = true;
-            document.getElementById('stopButton').disabled = false;
-            document.querySelector('.voice-status').textContent = 'Recording...';
-        }
+        function toggleRecording() {
+            const recordingButton = document.getElementById('recordingButton');
+            const voiceStatus = document.querySelector('.voice-status');
+            const processingAnimation = document.querySelector('.processing-animation');
+            const audioPlayer = document.getElementById('voiceBotAudio');
 
-        function stopRecording() {
-            mediaRecorder.stop();
-            document.getElementById('startButton').disabled = false;
-            document.getElementById('stopButton').disabled = true;
-            document.querySelector('.voice-status').textContent = 'Processing...';
+            if (!isRecording) {
+                // Start recording
+                audioChunks = [];
+                mediaRecorder.start();
+                isRecording = true;
+                recordingButton.classList.add('recording');
+                voiceStatus.textContent = 'Recording...';
+                processingAnimation.style.display = 'none';
+                audioPlayer.style.display = 'none';
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                isRecording = false;
+                recordingButton.classList.remove('recording');
+                voiceStatus.textContent = '';
+                processingAnimation.style.display = 'none';
+            }
         }
 
         function toggleVoiceBot() {
