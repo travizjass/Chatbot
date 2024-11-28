@@ -46,8 +46,8 @@
 
         .voice-box {
             position: fixed;
-            bottom: 100px;
-            right: 20px;
+            bottom: 200px;
+            right: 80px;
             width: 300px;
             height: 400px;
             background: white;
@@ -140,8 +140,8 @@
         }
         .chat-box {
             position: fixed;
-            bottom: 100px;
-            right: 20px;
+            bottom: 200px;
+            right: 60px;
             width: 300px;
             height: 400px;
             background: white;
@@ -217,6 +217,46 @@
         .recording-controls button:disabled {
             background: #93c5fd;
             cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .typing-dot {
+            width: 10px;
+            height: 10px;
+            margin: 0 4px;
+            border-radius: 50%;
+            background-color: #2563eb;
+            opacity: 0.5;
+            animation: typingDots 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingDots {
+            0%, 60%, 100% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
     </style>
 </head>
@@ -417,6 +457,90 @@
         }
 
         // Enter key handler for chat
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Typing animation
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                // Disable input during processing
+                messageInput.disabled = true;
+                
+                // Add user message
+                addMessage(message, 'user-message');
+                messageInput.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+                    
+                    // Remove typing indicator
+                    removeTypingIndicator();
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        addMessage(data.response, 'bot-message');
+                    } else {
+                        addMessage('Sorry, I encountered an error.', 'bot-message');
+                    }
+                    
+                    // Re-enable input
+                    messageInput.disabled = false;
+                    messageInput.focus();
+                } catch (error) {
+                    console.error('Error:', error);
+                    
+                    // Remove typing indicator
+                    removeTypingIndicator();
+                    
+                    addMessage('Sorry, I encountered an error.', 'bot-message');
+                    
+                    // Re-enable input
+                    messageInput.disabled = false;
+                    messageInput.focus();
+                }
+            }
+        }
+
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'message bot-message typing-indicator';
+            typingIndicator.id = 'typingIndicator';
+            
+            // Create three dots
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'typing-dot';
+                typingIndicator.appendChild(dot);
+            }
+            
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // Existing event listener remains the same
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
