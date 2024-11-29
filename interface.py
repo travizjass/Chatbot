@@ -60,7 +60,7 @@ def process_audio(audio_file, prompt):
     
     # # Decode the audio data and save it to a file
     # wav_bytes = base64.b64decode(completion.choices[0].message.audio.data)
-    output_audio_path = "/home/jasmin/dq/audiobot/audio/Registration_sol.wav"
+    output_audio_path = "/home/jasmin/dq/audiobot/audio/మీరు జనన ధృవాంకణ పత్.m4a"
     # with open(output_audio_path, 'wb') as f:
     #     f.write(wav_bytes)
     
@@ -97,7 +97,7 @@ def chat():
             9. You can also provide general information about government schemes, policies, and initiatives.
             10. Use Telugu language only to communicate with the users.
 
-            Please provide clear and concise answers to help users navigate and utilize the Mee Seva services effectively.
+            Please provide clear and concise answers to help users navigate and utilize the Mee Seva services effectively within 100 words.
             """
             },
             {

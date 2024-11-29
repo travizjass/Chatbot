@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeeSeva Bot Interface</title>
     <style>
-        /* ... (Keep existing styles) ... */
         body {
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            background-image: url('static/meeseva-screenshot.jpg');
+            background-image: url('static/signal-2024-11-29-130001.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -164,6 +163,7 @@
             padding: 8px 12px;
             border-radius: 15px;
             max-width: 80%;
+            cursor: pointer;
         }
 
         .user-message {
@@ -249,6 +249,7 @@
             align-items: center;
             justify-content: center;
             padding: 10px;
+            display: none;
         }
 
         .typing-dot {
@@ -282,6 +283,27 @@
                 opacity: 1;
                 transform: scale(1);
             }
+        }
+
+        .preloaded-questions {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .preloaded-question {
+            padding: 5px 10px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        .preloaded-question:hover {
+            background: #cbd5e1;
         }
     </style>
 </head>
@@ -352,10 +374,21 @@
             <span>MeeSeva Chat Assistant</span>
             <button class="close-btn" onclick="closeChatBot()">×</button>
         </div>
+        <div class="preloaded-questions">
+            <div class="preloaded-question" onclick="sendMessageWithPreloadedQuestion('నేను నా జనన ధృవీకరణ పత్రాన్ని ఎక్కడ పొందగలను')">నేను నా జనన ధృవీకరణ పత్రాన్ని ఎక్కడ పొందగలను</div>
+            <div class="preloaded-question" onclick="sendMessageWithPreloadedQuestion('నేను నా ఆస్తి పన్ను ఎలా చెల్లించగలను')">నేను నా ఆస్తి పన్ను ఎలా చెల్లించగలను</div>
+            <div class="preloaded-question" onclick="sendMessageWithPreloadedQuestion('దయచేసి నా ఆధార్ అప్లికేషన్ స్టేటస్‌తో నాకు సహాయం చేయండి')">దయచేసి నా ఆధార్ అప్లికేషన్ స్టేటస్‌తో నాకు సహాయం చేయండి</div>
+        </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input">
             <input type="text" id="messageInput" placeholder="Type your message...">
             <button onclick="sendMessage()">Send</button>
+        </div>
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" style="display: none;">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
         </div>
     </div>
 
@@ -462,67 +495,39 @@
         }
 
         // Chat Bot Functions
-        async function sendMessage() {
+        function sendMessageWithPreloadedQuestion(question) {
             const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value.trim();
-            
-            if (message) {
-                addMessage(message, 'user-message');
-                messageInput.value = '';
-                
-                try {
-                    const response = await fetch('/chat', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ message: message })
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        addMessage(data.response, 'bot-message');
-                    } else {
-                        addMessage('Sorry, I encountered an error.', 'bot-message');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    addMessage('Sorry, I encountered an error.', 'bot-message');
-                }
-            }
+            messageInput.value = question;
+            sendMessage();
         }
 
-        function addMessage(message, className) {
+        function showTypingIndicator() {
             const chatMessages = document.getElementById('chatMessages');
-            const messageElement = document.createElement('div');
-            messageElement.className = `message ${className}`;
-            messageElement.textContent = message;
-            chatMessages.appendChild(messageElement);
+            const typingIndicator = document.querySelector('.typing-indicator');
+            typingIndicator.style.display = 'flex';
+            chatMessages.appendChild(typingIndicator);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        function toggleChatBot() {
-            const chatBox = document.getElementById('chatBotBox');
-            if (chatBox.style.display === 'none' || chatBox.style.display === '') {
-                chatBox.style.display = 'flex';
-            } else {
-                closeChatBot();
+        function hideTypingIndicator() {
+            const typingIndicator = document.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.style.display = 'none';
             }
         }
 
-        function closeChatBot() {
-            const chatBox = document.getElementById('chatBotBox');
-            chatBox.style.display = 'none';
+        function simulateTyping(text, element, delay = 50) {
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < text.length) {
+                    element.textContent += text.charAt(index);
+                    index++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, delay);
         }
 
-        // Enter key handler for chat
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        // Typing animation
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
@@ -547,12 +552,13 @@
                         body: JSON.stringify({ message: message })
                     });
                     
-                    // Remove typing indicator
-                    removeTypingIndicator();
+                    // Hide typing indicator
+                    hideTypingIndicator();
                     
                     if (response.ok) {
                         const data = await response.json();
-                        addMessage(data.response, 'bot-message');
+                        const botMessageElement = addMessage('', 'bot-message');
+                        simulateTyping(data.response, botMessageElement);
                     } else {
                         addMessage('Sorry, I encountered an error.', 'bot-message');
                     }
@@ -563,8 +569,8 @@
                 } catch (error) {
                     console.error('Error:', error);
                     
-                    // Remove typing indicator
-                    removeTypingIndicator();
+                    // Hide typing indicator
+                    hideTypingIndicator();
                     
                     addMessage('Sorry, I encountered an error.', 'bot-message');
                     
@@ -575,31 +581,31 @@
             }
         }
 
-        function showTypingIndicator() {
+        function addMessage(message, className) {
             const chatMessages = document.getElementById('chatMessages');
-            const typingIndicator = document.createElement('div');
-            typingIndicator.className = 'message bot-message typing-indicator';
-            typingIndicator.id = 'typingIndicator';
-            
-            // Create three dots
-            for (let i = 0; i < 3; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'typing-dot';
-                typingIndicator.appendChild(dot);
-            }
-            
-            chatMessages.appendChild(typingIndicator);
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${className}`;
+            messageElement.textContent = message;
+            chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            return messageElement;
         }
 
-        function removeTypingIndicator() {
-            const typingIndicator = document.getElementById('typingIndicator');
-            if (typingIndicator) {
-                typingIndicator.remove();
+        function toggleChatBot() {
+            const chatBox = document.getElementById('chatBotBox');
+            if (chatBox.style.display === 'none' || chatBox.style.display === '') {
+                chatBox.style.display = 'flex';
+            } else {
+                closeChatBot();
             }
         }
 
-        // Existing event listener remains the same
+        function closeChatBot() {
+            const chatBox = document.getElementById('chatBotBox');
+            chatBox.style.display = 'none';
+        }
+
+        // Enter key handler for chat
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
